@@ -1,4 +1,4 @@
--- statement 1 · stage: lookup
+-- statement 1 · stage: single-hop
 SELECT "grid_fixtures__node"."severity_score" AS "_lk0"
 FROM "grid_fixtures__node"
 INNER JOIN "tap_entity" ON ("grid_fixtures__node"."entity_id" = "tap_entity"."id")
