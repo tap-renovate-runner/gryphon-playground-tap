@@ -1,0 +1,19 @@
+-- statement 1 · stage: lookup
+SELECT "grid_fixtures__node"."severity_score" AS "_lk0"
+FROM "grid_fixtures__node"
+INNER JOIN "tap_entity" ON ("grid_fixtures__node"."entity_id" = "tap_entity"."id")
+WHERE ("tap_entity"."deleted_at" IS NULL AND "grid_fixtures__node"."kind" = %s)
+LIMIT 2
+-- params: ['policy-gold']
+-- statement 2 · stage: advanced
+SELECT COUNT("tap_edge"."to_entity_id") AS "_g_agg_0"
+FROM "tap_edge"
+INNER JOIN "tap_entity" ON ("tap_edge"."entity_id" = "tap_entity"."id")
+INNER JOIN "tap_entity" T3 ON ("tap_edge"."from_entity_id" = T3."id")
+INNER JOIN "tap_entity" T4 ON ("tap_edge"."to_entity_id" = T4."id")
+LEFT OUTER JOIN "grid_fixtures__node" ON (T4."id" = "grid_fixtures__node"."entity_id")
+WHERE ("tap_entity"."deleted_at" IS NULL AND T3."deleted_at" IS NULL AND T4."deleted_at" IS NULL AND "tap_edge"."edge_type" = %s AND T3."entity_type" = %s AND T4."entity_type" = %s AND ("grid_fixtures__node"."observed_at" + ((SELECT U0."severity_score" AS "_lk"
+FROM "grid_fixtures__node" U0
+INNER JOIN "tap_entity" U1 ON (U0."entity_id" = U1."id")
+WHERE (U1."deleted_at" IS NULL AND U0."kind" = %s)) * %s)) < %s AND "grid_fixtures__node"."observed_at" IS NOT NULL)
+-- params: ['PG_LINKS__grid_fixtures', 'grid_fixtures__leaf', 'grid_fixtures__node', 'policy-gold', datetime.timedelta(seconds=3600), datetime.datetime(2026, 3, 10, 0, 0, tzinfo=datetime.timezone.utc)]

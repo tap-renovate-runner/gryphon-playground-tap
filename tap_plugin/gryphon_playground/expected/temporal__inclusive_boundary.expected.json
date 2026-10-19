@@ -1,0 +1,76 @@
+{
+  "nodes": [
+    {
+      "entity_id": "019e8b00-0000-7000-8000-000000000001",
+      "entity_type": "grid_fixtures__leaf",
+      "name": "Review 1",
+      "dimensions": {
+        "tap.playground": "gridkin"
+      },
+      "deleted_at": null,
+      "version": 1
+    },
+    {
+      "entity_id": "019e8b00-0000-7000-8000-000000000011",
+      "entity_type": "grid_fixtures__node",
+      "name": "Alert boundary",
+      "dimensions": {
+        "tap.playground": "gridkin"
+      },
+      "deleted_at": null,
+      "version": 1
+    },
+    {
+      "entity_id": "019e8b00-0000-7000-8000-000000000012",
+      "entity_type": "grid_fixtures__node",
+      "name": "Alert overdue",
+      "dimensions": {
+        "tap.playground": "gridkin"
+      },
+      "deleted_at": null,
+      "version": 1
+    },
+    {
+      "entity_id": "019e8b00-0000-7000-8000-000000000013",
+      "entity_type": "grid_fixtures__node",
+      "name": "Alert stale",
+      "dimensions": {
+        "tap.playground": "gridkin"
+      },
+      "deleted_at": null,
+      "version": 1
+    }
+  ],
+  "edges": [
+    {
+      "entity_id": "019e8b00-0000-7000-8000-000000000031",
+      "entity_type": "edge",
+      "name": "019e8b00-0000-7000-8000-000000000001 --[PG_LINKS__grid_fixtures]--> 019e8b00-0000-7000-8000-000000000011",
+      "dimensions": {
+        "tap.playground": "gridkin"
+      },
+      "deleted_at": null,
+      "version": 1
+    },
+    {
+      "entity_id": "019e8b00-0000-7000-8000-000000000032",
+      "entity_type": "edge",
+      "name": "019e8b00-0000-7000-8000-000000000001 --[PG_LINKS__grid_fixtures]--> 019e8b00-0000-7000-8000-000000000012",
+      "dimensions": {
+        "tap.playground": "gridkin"
+      },
+      "deleted_at": null,
+      "version": 1
+    },
+    {
+      "entity_id": "019e8b00-0000-7000-8000-000000000033",
+      "entity_type": "edge",
+      "name": "019e8b00-0000-7000-8000-000000000001 --[PG_LINKS__grid_fixtures]--> 019e8b00-0000-7000-8000-000000000013",
+      "dimensions": {
+        "tap.playground": "gridkin"
+      },
+      "deleted_at": null,
+      "version": 1
+    }
+  ]
+}

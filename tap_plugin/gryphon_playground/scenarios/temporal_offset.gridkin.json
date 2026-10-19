@@ -1,0 +1,552 @@
+{
+  "feature": "Temporal offset comparison: a date-time field shifted by whole hours, against now() or a supplied instant, with the hours read from one unlinked lookup row",
+  "background": {
+    "grift_fixture": "fixtures/temporal.grift.json",
+    "soft_delete": [
+      "019e8b00-0000-7000-8000-000000000025"
+    ]
+  },
+  "scenarios": [
+    {
+      "name": "a row exactly at the boundary instant is not overdue under <",
+      "tags": [
+        "temporal",
+        "boundary",
+        "lookup"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-1",
+        "req-grid-traversal-lang-temporal-offset-3",
+        "req-grid-traversal-lang-temporal-offset-11",
+        "req-grid-traversal-lang-temporal-offset-13",
+        "req-grid-traversal-lang-temporal-offset-15"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (r:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]->(a:grid_fixtures__node) LOOKUP p = (:grid_fixtures__node {kind: \"policy-gold\"}) WHERE a.data.observed_at + hours(p.data.severity_score) < now()",
+      "clock": "2026-03-10T00:00:00Z",
+      "expected_envelope": "expected/temporal__strictly_before.expected.json",
+      "expected_sql_snapshot": "expected/temporal__strictly_before.sql.txt"
+    },
+    {
+      "name": "a row exactly at the boundary instant matches under <=",
+      "tags": [
+        "temporal",
+        "boundary"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-11",
+        "req-grid-traversal-lang-temporal-offset-13"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (r:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]->(a:grid_fixtures__node) LOOKUP p = (:grid_fixtures__node {kind: \"policy-gold\"}) WHERE a.data.observed_at + hours(p.data.severity_score) <= now()",
+      "clock": "2026-03-10T00:00:00Z",
+      "expected_envelope": "expected/temporal__inclusive_boundary.expected.json",
+      "expected_sql_snapshot": "expected/temporal__inclusive_boundary.sql.txt"
+    },
+    {
+      "name": "NOT of an overdue test keeps fresh, future and the NULL-dated row",
+      "tags": [
+        "temporal",
+        "nulls",
+        "not"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-9",
+        "req-grid-traversal-lang-temporal-offset-14"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (r:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]->(a:grid_fixtures__node) LOOKUP p = (:grid_fixtures__node {kind: \"policy-gold\"}) WHERE NOT a.data.observed_at + hours(p.data.severity_score) < now()",
+      "clock": "2026-03-10T00:00:00Z",
+      "expected_envelope": "expected/temporal__negated_includes_null.expected.json",
+      "expected_sql_snapshot": "expected/temporal__negated_includes_null.sql.txt"
+    },
+    {
+      "name": "a longer policy window moves the boundary: only the 72h row is overdue",
+      "tags": [
+        "temporal",
+        "lookup"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-1",
+        "req-grid-traversal-lang-temporal-offset-3"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (r:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]->(a:grid_fixtures__node) LOOKUP p = (:grid_fixtures__node {kind: \"policy-silver\"}) WHERE a.data.observed_at + hours(p.data.severity_score) < now()",
+      "clock": "2026-03-10T00:00:00Z",
+      "expected_envelope": "expected/temporal__silver_window.expected.json",
+      "expected_sql_snapshot": "expected/temporal__silver_window.sql.txt"
+    },
+    {
+      "name": "a literal offset needs no lookup",
+      "tags": [
+        "temporal",
+        "literal"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-1"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (r:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]->(a:grid_fixtures__node) WHERE a.data.observed_at + hours(36) < now()",
+      "clock": "2026-03-10T00:00:00Z",
+      "expected_envelope": "expected/temporal__literal_hours.expected.json",
+      "expected_sql_snapshot": "expected/temporal__literal_hours.sql.txt"
+    },
+    {
+      "name": "a minus offset against a supplied instant",
+      "tags": [
+        "temporal",
+        "param",
+        "minus"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-1",
+        "req-grid-traversal-lang-temporal-offset-8"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (r:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]->(a:grid_fixtures__node) WHERE a.data.observed_at - hours(12) >= $t",
+      "clock": "2026-03-10T00:00:00Z",
+      "params": {
+        "t": "2026-03-08T12:00:00Z"
+      },
+      "expected_envelope": "expected/temporal__minus_and_instant_param.expected.json",
+      "expected_sql_snapshot": "expected/temporal__minus_and_instant_param.sql.txt"
+    },
+    {
+      "name": "a supplied instant replaces now()",
+      "tags": [
+        "temporal",
+        "param"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-1",
+        "req-grid-traversal-lang-temporal-offset-8"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (r:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]->(a:grid_fixtures__node) LOOKUP p = (:grid_fixtures__node {kind: \"policy-gold\"}) WHERE a.data.observed_at + hours(p.data.severity_score) < $as_of",
+      "clock": "2026-03-10T00:00:00Z",
+      "params": {
+        "as_of": "2026-03-10T12:00:00Z"
+      },
+      "expected_envelope": "expected/temporal__supplied_instant_replaces_now.expected.json",
+      "expected_sql_snapshot": "expected/temporal__supplied_instant_replaces_now.sql.txt"
+    },
+    {
+      "name": "a temporal leaf composes with a test on the other end of the hop",
+      "tags": [
+        "temporal",
+        "composition"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-14",
+        "req-grid-traversal-lang-temporal-offset-24"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (r:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]->(a:grid_fixtures__node) LOOKUP p = (:grid_fixtures__node {kind: \"policy-gold\"}) WHERE r.data.observed_at IS NULL AND a.data.observed_at + hours(p.data.severity_score) < now()",
+      "clock": "2026-03-10T00:00:00Z",
+      "expected_envelope": "expected/temporal__composed_with_other_end.expected.json",
+      "expected_sql_snapshot": "expected/temporal__composed_with_other_end.sql.txt"
+    },
+    {
+      "name": "the base may belong to the source end of an inbound hop",
+      "tags": [
+        "temporal",
+        "inbound"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-24"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (a:grid_fixtures__node)<-[:PG_LINKS__grid_fixtures]-(r:grid_fixtures__leaf) WHERE r.data.observed_at + hours(24) > now()",
+      "clock": "2026-03-10T00:00:00Z",
+      "expected_envelope": "expected/temporal__source_end_base.expected.json",
+      "expected_sql_snapshot": "expected/temporal__source_end_base.sql.txt"
+    },
+    {
+      "name": "a NULL base on the source end matches the negation",
+      "tags": [
+        "temporal",
+        "inbound",
+        "nulls",
+        "not"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-9",
+        "req-grid-traversal-lang-temporal-offset-24"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (a:grid_fixtures__node)<-[:PG_LINKS__grid_fixtures]-(r:grid_fixtures__leaf) WHERE NOT r.data.observed_at + hours(24) > now()",
+      "clock": "2026-03-10T00:00:00Z",
+      "expected_envelope": "expected/temporal__source_end_null_negated.expected.json",
+      "expected_sql_snapshot": "expected/temporal__source_end_null_negated.sql.txt"
+    },
+    {
+      "name": "COUNT over the pattern counts the overdue rows",
+      "tags": [
+        "temporal",
+        "count"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-15"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (r:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]->(a:grid_fixtures__node) LOOKUP p = (:grid_fixtures__node {kind: \"policy-gold\"}) WHERE a.data.observed_at + hours(p.data.severity_score) < now() RETURN COUNT(a) AS due",
+      "clock": "2026-03-10T00:00:00Z",
+      "expected_envelope": "expected/temporal__count_over_pattern.expected.json",
+      "expected_sql_snapshot": "expected/temporal__count_over_pattern.sql.txt"
+    },
+    {
+      "name": "the same pattern with no WHERE returns every alert",
+      "tags": [
+        "temporal",
+        "over-inclusion"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-15"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (r:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]->(a:grid_fixtures__node)",
+      "clock": "2026-03-10T00:00:00Z",
+      "expected_envelope": "expected/temporal__no_where_over_inclusion.expected.json",
+      "expected_sql_snapshot": "expected/temporal__no_where_over_inclusion.sql.txt"
+    },
+    {
+      "name": "a lookup that matches no row is refused",
+      "tags": [
+        "temporal",
+        "lookup",
+        "rejection"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-3"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (r:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]->(a:grid_fixtures__node) LOOKUP p = (:grid_fixtures__node {kind: \"policy-none\"}) WHERE a.data.observed_at + hours(p.data.severity_score) < now()",
+      "clock": "2026-03-10T00:00:00Z",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "matched no row"
+      }
+    },
+    {
+      "name": "a lookup that matches several rows is refused",
+      "tags": [
+        "temporal",
+        "lookup",
+        "rejection"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-3"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (r:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]->(a:grid_fixtures__node) LOOKUP p = (:grid_fixtures__node {kind: \"policy-dup\"}) WHERE a.data.observed_at + hours(p.data.severity_score) < now()",
+      "clock": "2026-03-10T00:00:00Z",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "more than one row"
+      }
+    },
+    {
+      "name": "a soft-deleted lookup row is never selected",
+      "tags": [
+        "temporal",
+        "lookup",
+        "rejection"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-4"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (r:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]->(a:grid_fixtures__node) LOOKUP p = (:grid_fixtures__node {kind: \"policy-retired\"}) WHERE a.data.observed_at + hours(p.data.severity_score) < now()",
+      "clock": "2026-03-10T00:00:00Z",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "matched no row"
+      }
+    },
+    {
+      "name": "a null lookup key is refused",
+      "tags": [
+        "temporal",
+        "lookup",
+        "rejection"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-10"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (r:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]->(a:grid_fixtures__node) LOOKUP p = (:grid_fixtures__node {kind: $k}) WHERE a.data.observed_at + hours(p.data.severity_score) < now()",
+      "clock": "2026-03-10T00:00:00Z",
+      "params": {
+        "k": null
+      },
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "is null"
+      }
+    },
+    {
+      "name": "a node-only scan is refused",
+      "tags": [
+        "temporal",
+        "rejection"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-16"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (a:grid_fixtures__node) WHERE a.data.observed_at + hours(1) < now()",
+      "clock": "2026-03-10T00:00:00Z",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "node-only"
+      }
+    },
+    {
+      "name": "a multi-hop pattern is refused",
+      "tags": [
+        "temporal",
+        "rejection"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-16"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (h:grid_fixtures__hub)-[:PG_LINKS__grid_fixtures]->(r:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]->(a:grid_fixtures__node) WHERE a.data.observed_at + hours(1) < now()",
+      "clock": "2026-03-10T00:00:00Z",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "multi-hop"
+      }
+    },
+    {
+      "name": "an undirected hop is refused",
+      "tags": [
+        "temporal",
+        "rejection"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-16",
+        "req-grid-traversal-lang-temporal-offset-24"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (r:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]-(a:grid_fixtures__node) WHERE a.data.observed_at + hours(1) < now()",
+      "clock": "2026-03-10T00:00:00Z",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "undirected"
+      }
+    },
+    {
+      "name": "NOT EXISTS beside a temporal leaf is refused",
+      "tags": [
+        "temporal",
+        "rejection"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-16"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (r:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]->(a:grid_fixtures__node) NOT EXISTS { MATCH (x:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]->(a) } WHERE a.data.observed_at + hours(1) < now()",
+      "clock": "2026-03-10T00:00:00Z",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "NOT EXISTS"
+      }
+    },
+    {
+      "name": "a second MATCH clause is refused",
+      "tags": [
+        "temporal",
+        "rejection"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-23"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (r:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]->(a:grid_fixtures__node) MATCH (h:grid_fixtures__hub) WHERE a.data.observed_at + hours(1) < now()",
+      "clock": "2026-03-10T00:00:00Z",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "more than one MATCH"
+      }
+    },
+    {
+      "name": "equality on a temporal comparison is refused",
+      "tags": [
+        "temporal",
+        "rejection"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-12"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (r:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]->(a:grid_fixtures__node) WHERE a.data.observed_at + hours(1) = now()",
+      "clock": "2026-03-10T00:00:00Z",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "<, <=, >, >="
+      }
+    },
+    {
+      "name": "arithmetic in RETURN is refused",
+      "tags": [
+        "temporal",
+        "rejection"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-17"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (r:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]->(a:grid_fixtures__node) RETURN a.data.observed_at + hours(1) AS due",
+      "clock": "2026-03-10T00:00:00Z",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "Arithmetic in RETURN"
+      }
+    },
+    {
+      "name": "a lookup variable outside hours() is refused",
+      "tags": [
+        "temporal",
+        "rejection"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-5"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (r:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]->(a:grid_fixtures__node) LOOKUP p = (:grid_fixtures__node {kind: \"policy-gold\"}) WHERE p.data.severity_score = 24 AND a.data.observed_at + hours(p.data.severity_score) < now()",
+      "clock": "2026-03-10T00:00:00Z",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "cannot be used"
+      }
+    },
+    {
+      "name": "an unused lookup is refused",
+      "tags": [
+        "temporal",
+        "rejection"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-20"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (r:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]->(a:grid_fixtures__node) LOOKUP p = (:grid_fixtures__node {kind: \"policy-gold\"}) WHERE a.data.kind = \"x\"",
+      "clock": "2026-03-10T00:00:00Z",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "no temporal comparison reads it"
+      }
+    },
+    {
+      "name": "a base that is not a date-time is refused",
+      "tags": [
+        "temporal",
+        "rejection"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-6"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (r:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]->(a:grid_fixtures__node) WHERE a.data.severity_score + hours(1) < now()",
+      "clock": "2026-03-10T00:00:00Z",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "not supported"
+      }
+    },
+    {
+      "name": "an hours field that is not an integer is refused",
+      "tags": [
+        "temporal",
+        "rejection"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-7"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (r:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]->(a:grid_fixtures__node) LOOKUP p = (:grid_fixtures__node {kind: \"policy-gold\"}) WHERE a.data.observed_at + hours(p.data.kind) < now()",
+      "clock": "2026-03-10T00:00:00Z",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "hours"
+      }
+    },
+    {
+      "name": "a naive supplied instant is refused",
+      "tags": [
+        "temporal",
+        "rejection"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-22"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (r:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]->(a:grid_fixtures__node) WHERE a.data.observed_at + hours(1) < $t",
+      "clock": "2026-03-10T00:00:00Z",
+      "params": {
+        "t": "2026-03-10T00:00:00"
+      },
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "naive"
+      }
+    }
+  ]
+}

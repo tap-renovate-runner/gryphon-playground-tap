@@ -1,0 +1,406 @@
+{
+  "metadata": {
+    "grift_version": "0"
+  },
+  "_reserved": {},
+  "batches": [
+    {
+      "batch_entity": {
+        "entity_id": "019e8b00-0000-7000-8000-000000000040",
+        "entity_type": "batch",
+        "name": "Gridkin fixture — temporal",
+        "dimensions": {}
+      },
+      "batch_node": {
+        "name": "Gridkin fixture — temporal",
+        "description": "Review -> alert stand-ins (leaf -> node over PG_LINKS) plus UNLINKED policy rows, built for req-grid-traversal-lang-temporal-offset. Clock for every scenario is 2026-03-10T00:00:00Z. Alert ages: boundary 24h (written +02:00), overdue 48h, stale 72h, fresh 12h, future -24h, unobserved NULL. Policy windows in severity_score: gold 24, silver 48; two rows share the key policy-dup; policy-retired is soft-deleted.",
+        "source": "plugin:gryphon_playground"
+      },
+      "nodes": [
+        {
+          "entity": {
+            "entity_id": "019e8b00-0000-7000-8000-000000000001",
+            "entity_type": "grid_fixtures__leaf",
+            "name": "Review 1",
+            "dimensions": {
+              "tap.playground": "gridkin"
+            },
+            "created_at": "2026-03-01T00:00:00Z",
+            "updated_at": "2026-03-01T00:00:00Z"
+          },
+          "node": {
+            "name": "Review 1",
+            "description": "Open review: observed_at (its closed time) is NULL.",
+            "kind": "",
+            "severity_score": 0,
+            "is_open": false,
+            "observed_at": null,
+            "tags": {}
+          }
+        },
+        {
+          "entity": {
+            "entity_id": "019e8b00-0000-7000-8000-000000000002",
+            "entity_type": "grid_fixtures__leaf",
+            "name": "Review 2",
+            "dimensions": {
+              "tap.playground": "gridkin"
+            },
+            "created_at": "2026-03-01T00:00:00Z",
+            "updated_at": "2026-03-01T00:00:00Z"
+          },
+          "node": {
+            "name": "Review 2",
+            "description": "Closed review: observed_at is its closed time.",
+            "kind": "",
+            "severity_score": 0,
+            "is_open": false,
+            "observed_at": "2026-03-09T18:00:00Z",
+            "tags": {}
+          }
+        },
+        {
+          "entity": {
+            "entity_id": "019e8b00-0000-7000-8000-000000000011",
+            "entity_type": "grid_fixtures__node",
+            "name": "Alert boundary",
+            "dimensions": {
+              "tap.playground": "gridkin"
+            },
+            "created_at": "2026-03-01T00:00:00Z",
+            "updated_at": "2026-03-01T00:00:00Z"
+          },
+          "node": {
+            "name": "Alert boundary",
+            "description": "Observed 24h before the clock, written with a +02:00 offset.",
+            "kind": "",
+            "severity_score": 0,
+            "is_open": false,
+            "observed_at": "2026-03-09T02:00:00+02:00",
+            "tags": {}
+          }
+        },
+        {
+          "entity": {
+            "entity_id": "019e8b00-0000-7000-8000-000000000012",
+            "entity_type": "grid_fixtures__node",
+            "name": "Alert overdue",
+            "dimensions": {
+              "tap.playground": "gridkin"
+            },
+            "created_at": "2026-03-01T00:00:00Z",
+            "updated_at": "2026-03-01T00:00:00Z"
+          },
+          "node": {
+            "name": "Alert overdue",
+            "description": "Observed 48h before the clock.",
+            "kind": "",
+            "severity_score": 0,
+            "is_open": false,
+            "observed_at": "2026-03-08T00:00:00Z",
+            "tags": {}
+          }
+        },
+        {
+          "entity": {
+            "entity_id": "019e8b00-0000-7000-8000-000000000013",
+            "entity_type": "grid_fixtures__node",
+            "name": "Alert stale",
+            "dimensions": {
+              "tap.playground": "gridkin"
+            },
+            "created_at": "2026-03-01T00:00:00Z",
+            "updated_at": "2026-03-01T00:00:00Z"
+          },
+          "node": {
+            "name": "Alert stale",
+            "description": "Observed 72h before the clock.",
+            "kind": "",
+            "severity_score": 0,
+            "is_open": false,
+            "observed_at": "2026-03-07T00:00:00Z",
+            "tags": {}
+          }
+        },
+        {
+          "entity": {
+            "entity_id": "019e8b00-0000-7000-8000-000000000014",
+            "entity_type": "grid_fixtures__node",
+            "name": "Alert fresh",
+            "dimensions": {
+              "tap.playground": "gridkin"
+            },
+            "created_at": "2026-03-01T00:00:00Z",
+            "updated_at": "2026-03-01T00:00:00Z"
+          },
+          "node": {
+            "name": "Alert fresh",
+            "description": "Observed 12h before the clock.",
+            "kind": "",
+            "severity_score": 0,
+            "is_open": false,
+            "observed_at": "2026-03-09T12:00:00Z",
+            "tags": {}
+          }
+        },
+        {
+          "entity": {
+            "entity_id": "019e8b00-0000-7000-8000-000000000015",
+            "entity_type": "grid_fixtures__node",
+            "name": "Alert future",
+            "dimensions": {
+              "tap.playground": "gridkin"
+            },
+            "created_at": "2026-03-01T00:00:00Z",
+            "updated_at": "2026-03-01T00:00:00Z"
+          },
+          "node": {
+            "name": "Alert future",
+            "description": "Observed 24h AFTER the clock.",
+            "kind": "",
+            "severity_score": 0,
+            "is_open": false,
+            "observed_at": "2026-03-11T00:00:00Z",
+            "tags": {}
+          }
+        },
+        {
+          "entity": {
+            "entity_id": "019e8b00-0000-7000-8000-000000000016",
+            "entity_type": "grid_fixtures__node",
+            "name": "Alert unobserved",
+            "dimensions": {
+              "tap.playground": "gridkin"
+            },
+            "created_at": "2026-03-01T00:00:00Z",
+            "updated_at": "2026-03-01T00:00:00Z"
+          },
+          "node": {
+            "name": "Alert unobserved",
+            "description": "observed_at is NULL.",
+            "kind": "",
+            "severity_score": 0,
+            "is_open": false,
+            "observed_at": null,
+            "tags": {}
+          }
+        },
+        {
+          "entity": {
+            "entity_id": "019e8b00-0000-7000-8000-000000000021",
+            "entity_type": "grid_fixtures__node",
+            "name": "Policy gold",
+            "dimensions": {
+              "tap.playground": "gridkin"
+            },
+            "created_at": "2026-03-01T00:00:00Z",
+            "updated_at": "2026-03-01T00:00:00Z"
+          },
+          "node": {
+            "name": "Policy gold",
+            "description": "Window 24h.",
+            "kind": "policy-gold",
+            "severity_score": 24,
+            "is_open": false,
+            "observed_at": null,
+            "tags": {}
+          }
+        },
+        {
+          "entity": {
+            "entity_id": "019e8b00-0000-7000-8000-000000000022",
+            "entity_type": "grid_fixtures__node",
+            "name": "Policy silver",
+            "dimensions": {
+              "tap.playground": "gridkin"
+            },
+            "created_at": "2026-03-01T00:00:00Z",
+            "updated_at": "2026-03-01T00:00:00Z"
+          },
+          "node": {
+            "name": "Policy silver",
+            "description": "Window 48h.",
+            "kind": "policy-silver",
+            "severity_score": 48,
+            "is_open": false,
+            "observed_at": null,
+            "tags": {}
+          }
+        },
+        {
+          "entity": {
+            "entity_id": "019e8b00-0000-7000-8000-000000000023",
+            "entity_type": "grid_fixtures__node",
+            "name": "Policy dup A",
+            "dimensions": {
+              "tap.playground": "gridkin"
+            },
+            "created_at": "2026-03-01T00:00:00Z",
+            "updated_at": "2026-03-01T00:00:00Z"
+          },
+          "node": {
+            "name": "Policy dup A",
+            "description": "One of two rows sharing a key.",
+            "kind": "policy-dup",
+            "severity_score": 1,
+            "is_open": false,
+            "observed_at": null,
+            "tags": {}
+          }
+        },
+        {
+          "entity": {
+            "entity_id": "019e8b00-0000-7000-8000-000000000024",
+            "entity_type": "grid_fixtures__node",
+            "name": "Policy dup B",
+            "dimensions": {
+              "tap.playground": "gridkin"
+            },
+            "created_at": "2026-03-01T00:00:00Z",
+            "updated_at": "2026-03-01T00:00:00Z"
+          },
+          "node": {
+            "name": "Policy dup B",
+            "description": "One of two rows sharing a key.",
+            "kind": "policy-dup",
+            "severity_score": 2,
+            "is_open": false,
+            "observed_at": null,
+            "tags": {}
+          }
+        },
+        {
+          "entity": {
+            "entity_id": "019e8b00-0000-7000-8000-000000000025",
+            "entity_type": "grid_fixtures__node",
+            "name": "Policy retired",
+            "dimensions": {
+              "tap.playground": "gridkin"
+            },
+            "created_at": "2026-03-01T00:00:00Z",
+            "updated_at": "2026-03-01T00:00:00Z"
+          },
+          "node": {
+            "name": "Policy retired",
+            "description": "Soft-deleted by the scenario file.",
+            "kind": "policy-retired",
+            "severity_score": 12,
+            "is_open": false,
+            "observed_at": null,
+            "tags": {}
+          }
+        }
+      ],
+      "edges": [
+        {
+          "entity": {
+            "entity_id": "019e8b00-0000-7000-8000-000000000031",
+            "entity_type": "edge",
+            "name": "019e8b00-0000-7000-8000-000000000001 --[PG_LINKS__grid_fixtures]--> 019e8b00-0000-7000-8000-000000000011",
+            "dimensions": {
+              "tap.playground": "gridkin"
+            },
+            "created_at": "2026-03-01T00:00:00Z",
+            "updated_at": "2026-03-01T00:00:00Z"
+          },
+          "edge": {
+            "from_entity_id": "019e8b00-0000-7000-8000-000000000001",
+            "to_entity_id": "019e8b00-0000-7000-8000-000000000011",
+            "edge_type": "PG_LINKS__grid_fixtures",
+            "properties": {}
+          }
+        },
+        {
+          "entity": {
+            "entity_id": "019e8b00-0000-7000-8000-000000000032",
+            "entity_type": "edge",
+            "name": "019e8b00-0000-7000-8000-000000000001 --[PG_LINKS__grid_fixtures]--> 019e8b00-0000-7000-8000-000000000012",
+            "dimensions": {
+              "tap.playground": "gridkin"
+            },
+            "created_at": "2026-03-01T00:00:00Z",
+            "updated_at": "2026-03-01T00:00:00Z"
+          },
+          "edge": {
+            "from_entity_id": "019e8b00-0000-7000-8000-000000000001",
+            "to_entity_id": "019e8b00-0000-7000-8000-000000000012",
+            "edge_type": "PG_LINKS__grid_fixtures",
+            "properties": {}
+          }
+        },
+        {
+          "entity": {
+            "entity_id": "019e8b00-0000-7000-8000-000000000033",
+            "entity_type": "edge",
+            "name": "019e8b00-0000-7000-8000-000000000001 --[PG_LINKS__grid_fixtures]--> 019e8b00-0000-7000-8000-000000000013",
+            "dimensions": {
+              "tap.playground": "gridkin"
+            },
+            "created_at": "2026-03-01T00:00:00Z",
+            "updated_at": "2026-03-01T00:00:00Z"
+          },
+          "edge": {
+            "from_entity_id": "019e8b00-0000-7000-8000-000000000001",
+            "to_entity_id": "019e8b00-0000-7000-8000-000000000013",
+            "edge_type": "PG_LINKS__grid_fixtures",
+            "properties": {}
+          }
+        },
+        {
+          "entity": {
+            "entity_id": "019e8b00-0000-7000-8000-000000000034",
+            "entity_type": "edge",
+            "name": "019e8b00-0000-7000-8000-000000000001 --[PG_LINKS__grid_fixtures]--> 019e8b00-0000-7000-8000-000000000014",
+            "dimensions": {
+              "tap.playground": "gridkin"
+            },
+            "created_at": "2026-03-01T00:00:00Z",
+            "updated_at": "2026-03-01T00:00:00Z"
+          },
+          "edge": {
+            "from_entity_id": "019e8b00-0000-7000-8000-000000000001",
+            "to_entity_id": "019e8b00-0000-7000-8000-000000000014",
+            "edge_type": "PG_LINKS__grid_fixtures",
+            "properties": {}
+          }
+        },
+        {
+          "entity": {
+            "entity_id": "019e8b00-0000-7000-8000-000000000035",
+            "entity_type": "edge",
+            "name": "019e8b00-0000-7000-8000-000000000002 --[PG_LINKS__grid_fixtures]--> 019e8b00-0000-7000-8000-000000000015",
+            "dimensions": {
+              "tap.playground": "gridkin"
+            },
+            "created_at": "2026-03-01T00:00:00Z",
+            "updated_at": "2026-03-01T00:00:00Z"
+          },
+          "edge": {
+            "from_entity_id": "019e8b00-0000-7000-8000-000000000002",
+            "to_entity_id": "019e8b00-0000-7000-8000-000000000015",
+            "edge_type": "PG_LINKS__grid_fixtures",
+            "properties": {}
+          }
+        },
+        {
+          "entity": {
+            "entity_id": "019e8b00-0000-7000-8000-000000000036",
+            "entity_type": "edge",
+            "name": "019e8b00-0000-7000-8000-000000000002 --[PG_LINKS__grid_fixtures]--> 019e8b00-0000-7000-8000-000000000016",
+            "dimensions": {
+              "tap.playground": "gridkin"
+            },
+            "created_at": "2026-03-01T00:00:00Z",
+            "updated_at": "2026-03-01T00:00:00Z"
+          },
+          "edge": {
+            "from_entity_id": "019e8b00-0000-7000-8000-000000000002",
+            "to_entity_id": "019e8b00-0000-7000-8000-000000000016",
+            "edge_type": "PG_LINKS__grid_fixtures",
+            "properties": {}
+          }
+        }
+      ]
+    }
+  ]
+}

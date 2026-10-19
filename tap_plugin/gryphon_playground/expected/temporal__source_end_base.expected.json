@@ -1,0 +1,56 @@
+{
+  "nodes": [
+    {
+      "entity_id": "019e8b00-0000-7000-8000-000000000002",
+      "entity_type": "grid_fixtures__leaf",
+      "name": "Review 2",
+      "dimensions": {
+        "tap.playground": "gridkin"
+      },
+      "deleted_at": null,
+      "version": 1
+    },
+    {
+      "entity_id": "019e8b00-0000-7000-8000-000000000015",
+      "entity_type": "grid_fixtures__node",
+      "name": "Alert future",
+      "dimensions": {
+        "tap.playground": "gridkin"
+      },
+      "deleted_at": null,
+      "version": 1
+    },
+    {
+      "entity_id": "019e8b00-0000-7000-8000-000000000016",
+      "entity_type": "grid_fixtures__node",
+      "name": "Alert unobserved",
+      "dimensions": {
+        "tap.playground": "gridkin"
+      },
+      "deleted_at": null,
+      "version": 1
+    }
+  ],
+  "edges": [
+    {
+      "entity_id": "019e8b00-0000-7000-8000-000000000035",
+      "entity_type": "edge",
+      "name": "019e8b00-0000-7000-8000-000000000002 --[PG_LINKS__grid_fixtures]--> 019e8b00-0000-7000-8000-000000000015",
+      "dimensions": {
+        "tap.playground": "gridkin"
+      },
+      "deleted_at": null,
+      "version": 1
+    },
+    {
+      "entity_id": "019e8b00-0000-7000-8000-000000000036",
+      "entity_type": "edge",
+      "name": "019e8b00-0000-7000-8000-000000000002 --[PG_LINKS__grid_fixtures]--> 019e8b00-0000-7000-8000-000000000016",
+      "dimensions": {
+        "tap.playground": "gridkin"
+      },
+      "deleted_at": null,
+      "version": 1
+    }
+  ]
+}

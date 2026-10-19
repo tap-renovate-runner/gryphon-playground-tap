@@ -316,6 +316,7 @@ class TestStageCoverage:
             "bare-type-scan",
             "type-scan",
             "single-hop",
+            "lookup",
         }
 
     def test_enumerate_stage_labels_rejects_a_non_literal(self, tmp_path):
