@@ -20,7 +20,8 @@
         "req-grid-traversal-lang-temporal-offset-3",
         "req-grid-traversal-lang-temporal-offset-11",
         "req-grid-traversal-lang-temporal-offset-13",
-        "req-grid-traversal-lang-temporal-offset-15"
+        "req-grid-traversal-lang-temporal-offset-15",
+        "req-grid-traversal-lang-temporal-offset-19"
       ],
       "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
       "layer": "lite",
@@ -65,6 +66,47 @@
       "clock": "2026-03-10T00:00:00Z",
       "expected_envelope": "expected/temporal__negated_includes_null.expected.json",
       "expected_sql_snapshot": "expected/temporal__negated_includes_null.sql.txt"
+    },
+    {
+      "name": "a negative stored offset moves the deadline earlier",
+      "tags": [
+        "temporal",
+        "lookup",
+        "negative"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-1",
+        "req-grid-traversal-lang-temporal-offset-19"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (r:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]->(a:grid_fixtures__node) LOOKUP p = (:grid_fixtures__node {kind: \"policy-negative\"}) WHERE a.data.observed_at + hours(p.data.severity_score) < now()",
+      "clock": "2026-03-10T00:00:00Z",
+      "expected_envelope": "expected/temporal__negative_stored_offset.expected.json",
+      "expected_sql_snapshot": "expected/temporal__negative_stored_offset.sql.txt"
+    },
+    {
+      "name": "an hours value supplied as a parameter",
+      "tags": [
+        "temporal",
+        "param"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-temporal-offset",
+        "req-grid-traversal-lang-temporal-offset-1",
+        "req-grid-traversal-lang-temporal-offset-7",
+        "req-grid-traversal-lang-temporal-offset-19"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: date-time offset against a lookup row; the TCK temporal folder tests Cypher temporal types, which Gryphon does not have)",
+      "layer": "lite",
+      "query": "MATCH (r:grid_fixtures__leaf)-[:PG_LINKS__grid_fixtures]->(a:grid_fixtures__node) WHERE a.data.observed_at + hours($h) < now()",
+      "clock": "2026-03-10T00:00:00Z",
+      "params": {
+        "h": 60
+      },
+      "expected_envelope": "expected/temporal__param_hours.expected.json",
+      "expected_sql_snapshot": "expected/temporal__param_hours.sql.txt"
     },
     {
       "name": "a longer policy window moves the boundary: only the 72h row is overdue",

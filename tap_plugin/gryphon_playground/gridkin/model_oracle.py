@@ -515,6 +515,11 @@ def _eval_temporal(pred: TemporalComparison, record: NodeRecord, inputs: dict[st
     return _COMPARATORS[pred.op](shifted, instant)
 
 
+def _same_value(stored: Any, wanted: Any) -> bool:
+    """Equality that keeps bool and int apart (``1 == True`` in Python; the engine is type-strict)."""
+    return stored == wanted and isinstance(stored, bool) == isinstance(wanted, bool)
+
+
 def resolve_lookups(ast: GryphonAST, graph: Graph, inputs: dict[str, Any]) -> dict[str, NodeRecord]:
     """Each LOOKUP's one live row: nodes of the label whose data matches every key.
 
@@ -527,7 +532,7 @@ def resolve_lookups(ast: GryphonAST, graph: Graph, inputs: dict[str, Any]) -> di
         rows = [
             n
             for n in graph.live_nodes()
-            if n.entity_type == lc.label and all(n.data.get(k) == v for k, v in wanted.items())
+            if n.entity_type == lc.label and all(_same_value(n.data.get(k), v) for k, v in wanted.items())
         ]
         if len(rows) != 1:
             raise OracleUnmodeled(f"LOOKUP {lc.variable} selects {len(rows)} rows (an error in the engine)")
@@ -801,7 +806,9 @@ def _eval_scoped(pred: Predicate | None, match: PatternMatch, inputs: dict[str, 
     if isinstance(pred, TemporalComparison):
         record = match.node_vars.get(pred.offset.base.variable)
         if record is None:
-            return True  # variable not bound here → leaf not applied
+            # Unlike an ordinary leaf, a temporal leaf is never "not applied": the engine refuses an
+            # unbound base, so the oracle must not model the silent drop.
+            raise OracleUnmodeled(f"temporal base variable {pred.offset.base.variable!r} is not bound")
         return eval_predicate(pred, record, inputs)
     if isinstance(pred, AndPred):
         return _kleene_and(_eval_scoped(pred.left, match, inputs), _eval_scoped(pred.right, match, inputs))

@@ -289,6 +289,27 @@
             "observed_at": null,
             "tags": {}
           }
+        },
+        {
+          "entity": {
+            "entity_id": "019e8b00-0000-7000-8000-000000000026",
+            "entity_type": "grid_fixtures__node",
+            "name": "Policy negative",
+            "dimensions": {
+              "tap.playground": "gridkin"
+            },
+            "created_at": "2026-03-01T00:00:00Z",
+            "updated_at": "2026-03-01T00:00:00Z"
+          },
+          "node": {
+            "name": "Policy negative",
+            "description": "Window -12h: a negative stored offset moves the deadline earlier.",
+            "kind": "policy-negative",
+            "severity_score": -12,
+            "is_open": false,
+            "observed_at": null,
+            "tags": {}
+          }
         }
       ],
       "edges": [
