@@ -849,6 +849,39 @@ def evaluate(
         _TEMPORAL_ENV.reset(token)
 
 
+def _where_leaf_variables(pred: Predicate | None) -> list[str]:
+    """Every variable a WHERE tree's leaves name (the temporal leaf names its BASE variable)."""
+    if pred is None:
+        return []
+    if isinstance(pred, (AndPred, OrPred)):
+        return _where_leaf_variables(pred.left) + _where_leaf_variables(pred.right)
+    if isinstance(pred, NotPred):
+        return _where_leaf_variables(pred.operand)
+    if isinstance(pred, (Comparison, InComparison, IsNullComparison, ObservationComparison)):
+        return [pred.field_path.variable]
+    if isinstance(pred, TemporalComparison):
+        return [pred.offset.base.variable]
+    return []
+
+
+def _refuse_unbound_where(ast: GryphonAST) -> None:
+    """A WHERE leaf on a variable NO mandatory MATCH clause binds is refused by the engine.
+
+    The oracle must not model the silent drop (Issue# 1072, Issue# 1084): per-clause scoping applies
+    only to a leaf ANOTHER clause binds. Only named node and edge variables bind.
+    """
+    if ast.where_clause is None:
+        return
+    bound: set[str] = set()
+    for mc in ast.match_clauses:
+        for pattern in mc.patterns:
+            bound |= {n.variable for n in pattern.nodes if n.variable}
+            bound |= {e.variable for e in pattern.edges if e.variable}
+    for var in _where_leaf_variables(ast.where_clause.predicate):
+        if var not in bound:
+            raise OracleUnmodeled(f"WHERE names variable {var!r}, which no MATCH clause binds (the engine refuses it)")
+
+
 def _evaluate(ast: GryphonAST, graph: Graph, inputs: dict[str, Any]) -> OracleResult:
     """The evaluation body (see :func:`evaluate`).
 
@@ -858,6 +891,8 @@ def _evaluate(ast: GryphonAST, graph: Graph, inputs: dict[str, Any]) -> OracleRe
     """
     if ast.optional_match_clauses:
         return _evaluate_optional_match(ast, graph, inputs)
+
+    _refuse_unbound_where(ast)
 
     # LIMIT with a positive cap but no ORDER BY: the specific subset returned is
     # the executor's arbitrary-but-deterministic default order — an

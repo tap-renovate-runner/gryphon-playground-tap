@@ -1,0 +1,178 @@
+{
+  "feature": "A WHERE leaf naming a variable no MATCH clause binds is refused, not silently dropped",
+  "background": {
+    "grift_fixture": "fixtures/sparse_dense.grift.json"
+  },
+  "scenarios": [
+    {
+      "name": "a WHERE comparison on a variable the single MATCH does not bind is refused",
+      "tags": [
+        "single-match",
+        "rejection",
+        "unbound-variable"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-shape-10"
+      ],
+      "inspired_by": "opencypher TCK — clauses/match (an undefined variable in WHERE is a compile-time error: UndefinedVariable)",
+      "layer": "lite",
+      "query": "MATCH (a:grid_fixtures__hub)-[:PG_LINKS__grid_fixtures]->(n:grid_fixtures__node) WHERE zz.data.kind = \"nothing-matches\"",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "does not bind"
+      }
+    },
+    {
+      "name": "a negated WHERE leaf on an unbound variable is refused",
+      "tags": [
+        "single-match",
+        "not",
+        "rejection",
+        "unbound-variable"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-shape-10"
+      ],
+      "inspired_by": "opencypher TCK — clauses/match (an undefined variable in WHERE is a compile-time error: UndefinedVariable)",
+      "layer": "lite",
+      "query": "MATCH (a:grid_fixtures__hub)-[:PG_LINKS__grid_fixtures]->(n:grid_fixtures__node) WHERE NOT zz.data.kind = \"x\"",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "does not bind"
+      }
+    },
+    {
+      "name": "an IN leaf on an unbound variable is refused",
+      "tags": [
+        "single-match",
+        "in-list",
+        "rejection",
+        "unbound-variable"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-shape-10"
+      ],
+      "inspired_by": "opencypher TCK — clauses/match (an undefined variable in WHERE is a compile-time error: UndefinedVariable)",
+      "layer": "lite",
+      "query": "MATCH (a:grid_fixtures__hub)-[:PG_LINKS__grid_fixtures]->(n:grid_fixtures__node) WHERE zz.data.kind IN [\"x\", \"y\"]",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "does not bind"
+      }
+    },
+    {
+      "name": "an IS NULL leaf on an unbound variable is refused",
+      "tags": [
+        "single-match",
+        "is-null",
+        "rejection",
+        "unbound-variable"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-shape-10"
+      ],
+      "inspired_by": "opencypher TCK — clauses/match (an undefined variable in WHERE is a compile-time error: UndefinedVariable)",
+      "layer": "lite",
+      "query": "MATCH (a:grid_fixtures__hub)-[:PG_LINKS__grid_fixtures]->(n:grid_fixtures__node) WHERE zz.data.kind IS NULL",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "does not bind"
+      }
+    },
+    {
+      "name": "an unbound leaf ANDed with a bound one is refused, not half-applied",
+      "tags": [
+        "single-match",
+        "and",
+        "rejection",
+        "unbound-variable"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-shape-10"
+      ],
+      "inspired_by": "opencypher TCK — clauses/match (an undefined variable in WHERE is a compile-time error: UndefinedVariable)",
+      "layer": "lite",
+      "query": "MATCH (a:grid_fixtures__hub)-[:PG_LINKS__grid_fixtures]->(n:grid_fixtures__node) WHERE n.data.kind = \"island\" AND zz.data.kind = \"x\"",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "does not bind"
+      }
+    },
+    {
+      "name": "a type scan with a WHERE on an unbound variable is refused",
+      "tags": [
+        "type-scan",
+        "rejection",
+        "unbound-variable"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-shape-10"
+      ],
+      "inspired_by": "opencypher TCK — clauses/match (an undefined variable in WHERE is a compile-time error: UndefinedVariable)",
+      "layer": "lite",
+      "query": "MATCH (n:grid_fixtures__node) WHERE zz.data.kind = \"x\"",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "does not bind"
+      }
+    },
+    {
+      "name": "an unnamed labelled node is not addressable by its label",
+      "tags": [
+        "single-match",
+        "unnamed-node",
+        "rejection",
+        "unbound-variable"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-shape-10"
+      ],
+      "inspired_by": "opencypher TCK — clauses/match (an undefined variable in WHERE is a compile-time error: UndefinedVariable)",
+      "layer": "lite",
+      "query": "MATCH (:grid_fixtures__hub)-[:PG_LINKS__grid_fixtures]->(n:grid_fixtures__node) WHERE grid_fixtures__hub.data.kind = \"x\"",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "does not bind"
+      }
+    },
+    {
+      "name": "a union refuses a WHERE leaf that no MATCH clause binds",
+      "tags": [
+        "union",
+        "multi-match",
+        "rejection",
+        "unbound-variable"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-shape-10"
+      ],
+      "inspired_by": "opencypher TCK — clauses/match (an undefined variable in WHERE is a compile-time error: UndefinedVariable)",
+      "layer": "lite",
+      "query": "MATCH (a:grid_fixtures__hub) MATCH (b:grid_fixtures__node) WHERE zz.data.kind = \"x\"",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "any MATCH clause"
+      }
+    },
+    {
+      "name": "a union refuses a negated leaf that no MATCH clause binds",
+      "tags": [
+        "union",
+        "multi-match",
+        "not",
+        "rejection",
+        "unbound-variable"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-shape-10"
+      ],
+      "inspired_by": "opencypher TCK — clauses/match (an undefined variable in WHERE is a compile-time error: UndefinedVariable)",
+      "layer": "lite",
+      "query": "MATCH (a:grid_fixtures__hub) MATCH (b:grid_fixtures__node) WHERE NOT zz.data.kind = \"x\"",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "any MATCH clause"
+      }
+    }
+  ]
+}
