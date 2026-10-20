@@ -21,6 +21,7 @@ import ast
 import difflib
 import json
 import re
+from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 from tap_plugin.gryphon_playground.gridkin.model_oracle import Graph, OracleUnmodeled, evaluate
@@ -374,6 +375,21 @@ def _expected_scan_tables(query: str) -> set[str]:
     return tables
 
 
+def scenario_instant(scenario: Scenario) -> datetime | None:
+    """The scenario's fixed query clock as an aware datetime, or None when it declares none."""
+    if scenario.clock is None:
+        return None
+    return datetime.fromisoformat(scenario.clock)
+
+
+def _clock_kwargs(scenario: Scenario) -> dict[str, Any]:
+    """The executor `clock` keyword for a scenario that pins one; empty otherwise (req-gridkin-scenario-clock)."""
+    instant = scenario_instant(scenario)
+    if instant is None:
+        return {}
+    return {"clock": lambda: instant}
+
+
 def run_scenario(scenario: Scenario, *, update_snapshots: bool = False) -> list[str]:
     """Run one Gridkin scenario.
 
@@ -393,7 +409,7 @@ def run_scenario(scenario: Scenario, *, update_snapshots: bool = False) -> list[
         return _check_rejection(scenario)
 
     result = explain_gryphon_raw(  # TAP-AUTHZ-COV: pytest-only gridkin harness, not a production path
-        scenario.query, scenario.params, db_alias="default", layer=scenario.layer
+        scenario.query, scenario.params, db_alias="default", layer=scenario.layer, **_clock_kwargs(scenario)
     )
     actual_envelope: dict[str, Any] = result["envelope"]
     actual_sql: str = result["sql"].render()
@@ -435,7 +451,7 @@ def _check_oracle(scenario: Scenario, actual: dict[str, Any]) -> list[str]:
     try:
         graph = Graph.from_grift(_oracle_document(scenario), frozenset(scenario.soft_delete))
         parsed = parse_gryphon(scenario.query)
-        oracle = evaluate(parsed, graph, scenario.params)
+        oracle = evaluate(parsed, graph, scenario.params, clock=scenario_instant(scenario))
     except OracleUnmodeled:
         return []
 
@@ -506,7 +522,7 @@ def _check_rejection(scenario: Scenario) -> list[str]:
     needle = spec.get("message_contains", "")
     try:
         explain_gryphon_raw(  # TAP-AUTHZ-COV: pytest-only gridkin harness, not a production path
-            scenario.query, scenario.params, db_alias="default", layer=scenario.layer
+            scenario.query, scenario.params, db_alias="default", layer=scenario.layer, **_clock_kwargs(scenario)
         )
     except want as exc:
         if needle and needle.lower() not in str(exc).lower():

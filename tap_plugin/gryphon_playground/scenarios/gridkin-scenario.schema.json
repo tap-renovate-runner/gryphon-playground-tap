@@ -86,6 +86,11 @@
           "pattern": "^opencypher TCK — (no applicable feature folder \\(.+\\)|.+/.+)$",
           "description": "Required openCypher-TCK mining breadcrumb (req-gridkin-tck-inspiration, req-grid-traversal-lang-tck-mining-3). Either a folder cite — 'opencypher TCK — <folder> (<intent>)', e.g. 'opencypher TCK — clauses/match (...)' — or, where no TCK folder applies, the explicit empty-pass marker 'opencypher TCK — no applicable feature folder (<reason>)' (reason names why, e.g. 'TAP-native: optimistic-concurrency' or 'openCypher TCK has no regex coverage'). 'Looked, found nothing' is a deliberate, recorded state; a missing breadcrumb is a forgotten mining pass. Per-folder COVERAGE state lives in tck-coverage.json, not here. Informational only, never a license claim."
         },
+        "clock": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$",
+          "description": "Optional fixed query clock (req-gridkin-scenario-clock): an ISO-8601 date-time WITH a UTC offset (Z or +hh:mm). The runner passes it to the executor as the clock, so a query that reads now() is evaluated at this instant and has a stable expected envelope and SQL snapshot. Required by the loader when the query text contains now(."
+        },
         "layer": {
           "enum": ["lite", "full", "extended"],
           "description": "GRIFT subgraph return layer to execute at. Defaults to full when omitted."

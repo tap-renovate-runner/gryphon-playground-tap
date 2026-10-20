@@ -52,6 +52,7 @@ is their shared operational companion.
 | req-gridkin-metamorphic-tlp | [Metamorphic TLP Corpus Assertion](#metamorphic-tlp-corpus-assertion) | Implemented | Ternary-logic partitioning derived from corpus scenarios probes the executor's 2VL/3VL null boundary for self-consistency |
 | req-gridkin-json-schema | [JSON Schema for Scenario Files](#json-schema-for-scenario-files) | Implemented | Author and validate-at-load a JSON Schema for the scenario format |
 | req-gridkin-multi-fixture-load | [Multi-Fixture Background Loads](#multi-fixture-background-loads) | Approved for Development | `background.grift_fixture` accepts a list of fixture paths; the runner imports each in order |
+| req-gridkin-scenario-clock | [Scenario Clock](#scenario-clock) | Approved for Development | An optional `clock` field pins `now()` for a scenario, so a clock-dependent query has a stable expected result and SQL snapshot |
 | req-gridkin-nongoals | [v0 Non-Goals](#v0-non-goals) | Implemented | Explicitly deferred concerns |
 
 ### Gridkin Scenario Format
@@ -980,6 +981,38 @@ The single-string form remains valid and behaves identically to today. No existi
 | req-gridkin-multi-fixture-load-3 | Sequential Import | Approved for Development | The runner imports each fixture in declared order via `grift_import(...)`; every fixture must succeed cleanly. | Same import-cleanly contract as single-fixture. |
 | req-gridkin-multi-fixture-load-4 | Soft-Delete After All Fixtures | Approved for Development | `background.soft_delete` runs once, after the last fixture finishes loading. | Soft-deletes are not interleaved or per-fixture. |
 | req-gridkin-multi-fixture-load-5 | Backward Compatible | Approved for Development | Existing scenarios using the single-string form continue to work unchanged. | Purely additive change to the schema. |
+
+### Scenario Clock
+----
+RID: `req-gridkin-scenario-clock`
+
+Status: `Approved for Development`
+
+A scenario may carry an optional `clock`: an ISO-8601 date-time with a UTC offset. The runner passes it to the executor as the query clock, so a query that reads `now()` (for example the temporal offset comparison, `req-grid-traversal-lang-temporal-offset` in `tap`) is evaluated against a fixed instant. Without it, `now()` reads the real time, the result changes from run to run, and no expected envelope or SQL snapshot could be a contract.
+
+#### Implementation
+
+The schema gains `clock` on the scenario object: a string that must match an ISO-8601 date-time carrying an offset (`Z` or `+hh:mm`). The loader exposes it as `Scenario.clock: str | None`. The runner parses it to an aware `datetime` and passes `clock=lambda: <that instant>` to `explain_gryphon_raw` on both the result path and the rejection path. A scenario whose query text contains `now(` and has no `clock` is refused by the loader, because that scenario would silently depend on the wall clock (the same fail-loud stance as the oracle discipline).
+
+#### Boundaries
+
+- One clock per scenario; there is no per-statement clock. The executor reads it once per execution.
+- A `clock` on a scenario whose query never reads `now()` is allowed and has no effect; the runner does not guess.
+- The model oracle receives the same instant, so the independent computation and the executor are compared at the same moment.
+
+#### Backward Compatibility
+
+The field is optional and additive. No existing scenario changes.
+
+#### Acceptance Criteria
+
+| ACID | Title | Status | Description | Notes |
+| --- | --- | :---: | --- | --- |
+| req-gridkin-scenario-clock-1 | Schema Validates The Field | Approved for Development | `clock` validates as a string ISO-8601 date-time with a UTC offset; a naive or non-date-time value fails schema validation naming the field. | |
+| req-gridkin-scenario-clock-2 | Runner Passes It | Approved for Development | The runner passes the parsed instant as the executor clock on the result path and the rejection path. | A fixed clock gives byte-stable captured SQL. |
+| req-gridkin-scenario-clock-3 | Now Requires A Clock | Approved for Development | A scenario whose query contains `now(` and has no `clock` is refused at load with an error naming the scenario. | No silent wall-clock dependence. |
+| req-gridkin-scenario-clock-4 | Oracle Shares The Instant | Approved for Development | The model oracle evaluates `now()` at the scenario's clock, not at the real time. | |
+| req-gridkin-scenario-clock-5 | Backward Compatible | Approved for Development | Scenarios without `clock` behave exactly as before. | Purely additive. |
 
 ### v0 Non-Goals
 ----

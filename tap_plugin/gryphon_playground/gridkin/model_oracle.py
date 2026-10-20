@@ -37,8 +37,9 @@ would disagree with the executor under `NOT` / `OR`.
 from __future__ import annotations
 
 import re
+from contextvars import ContextVar
 from dataclasses import dataclass, field
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 from tap_grid.gryphon.ast_nodes import (
@@ -59,6 +60,8 @@ from tap_grid.gryphon.ast_nodes import (
     PathPattern,
     Predicate,
     ReturnItem,
+    TemporalComparison,
+    NowRef,
 )
 
 # ---------------------------------------------------------------------------
@@ -436,6 +439,107 @@ def _eval_in(pred: InComparison, record: NodeRecord, inputs: dict[str, Any]) -> 
     return False
 
 
+# ---------------------------------------------------------------------------
+# Temporal offset comparison (req-grid-traversal-lang-temporal-offset)
+# ---------------------------------------------------------------------------
+#
+# `base +/- hours(x) <op> now() | $instant`, authored from the spec: the base is shifted by
+# whole hours and compared with the clock or a supplied instant. A NULL base never satisfies
+# the comparison and NOT of it is TRUE, so the leaf is a two-valued FALSE for a null base, not
+# UNKNOWN (the spec defines this, not sibling parity). A null offset, a null instant and a
+# lookup that does not select exactly one row are ERRORS in the engine; this oracle has no
+# error channel inside a result scenario, so it names them unmodeled instead of guessing.
+
+
+@dataclass(frozen=True)
+class _TemporalEnv:
+    """The per-evaluation state a temporal leaf reads: the scenario clock and resolved lookups."""
+
+    now: datetime | None
+    lookups: dict[str, NodeRecord]
+
+
+_TEMPORAL_ENV: ContextVar[_TemporalEnv | None] = ContextVar("gridkin_oracle_temporal_env", default=None)
+
+
+def _parse_instant(value: Any, what: str) -> datetime:
+    """An aware datetime from an ISO-8601 string or datetime; anything else is not modeled."""
+    if isinstance(value, datetime):
+        parsed = value
+    elif isinstance(value, str):
+        try:
+            parsed = datetime.fromisoformat(value)
+        except ValueError as exc:
+            raise OracleUnmodeled(f"{what} is not an ISO-8601 date-time: {value!r}") from exc
+    else:
+        raise OracleUnmodeled(f"{what} is not a date-time: {value!r}")
+    if parsed.tzinfo is None:
+        raise OracleUnmodeled(f"{what} is a naive date-time")
+    return parsed
+
+
+def _eval_temporal(pred: TemporalComparison, record: NodeRecord, inputs: dict[str, Any]) -> bool | None:
+    env = _TEMPORAL_ENV.get()
+    if env is None:
+        raise OracleUnmodeled("temporal comparison evaluated without an environment")
+    raw_base = _resolve_field(pred.offset.base, record)
+    if raw_base is None:
+        return False  # a null base never satisfies the comparison; NOT of it is TRUE
+    base = _parse_instant(raw_base, "temporal base")
+
+    hours = pred.offset.hours
+    if isinstance(hours, FieldPath):
+        source = env.lookups.get(hours.variable)
+        if source is None:
+            raise OracleUnmodeled(f"hours() reads unresolved lookup {hours.variable!r}")
+        count = _resolve_field(hours, source)
+    else:
+        count = _resolve_value(hours, inputs)
+    if count is None:
+        raise OracleUnmodeled("null offset (an error in the engine)")
+    if isinstance(count, bool) or not isinstance(count, int):
+        raise OracleUnmodeled(f"non-integer hours {count!r} (an error in the engine)")
+
+    if isinstance(pred.operand, NowRef):
+        if env.now is None:
+            raise OracleUnmodeled("now() without a scenario clock")
+        instant = env.now
+    else:
+        supplied = _resolve_value(pred.operand, inputs)
+        if supplied is None:
+            raise OracleUnmodeled("null instant (an error in the engine)")
+        instant = _parse_instant(supplied, "supplied instant")
+
+    shift = timedelta(hours=count)
+    shifted = base + shift if pred.offset.sign == "+" else base - shift
+    return _COMPARATORS[pred.op](shifted, instant)
+
+
+def _same_value(stored: Any, wanted: Any) -> bool:
+    """Equality that keeps bool and int apart (``1 == True`` in Python; the engine is type-strict)."""
+    return stored == wanted and isinstance(stored, bool) == isinstance(wanted, bool)
+
+
+def resolve_lookups(ast: GryphonAST, graph: Graph, inputs: dict[str, Any]) -> dict[str, NodeRecord]:
+    """Each LOOKUP's one live row: nodes of the label whose data matches every key.
+
+    Zero or several rows is an engine error, which a result scenario cannot contain, so it is
+    named unmodeled here rather than guessed.
+    """
+    out: dict[str, NodeRecord] = {}
+    for lc in ast.lookup_clauses:
+        wanted = {key: _resolve_value(value, inputs) for key, value in lc.props.items()}
+        rows = [
+            n
+            for n in graph.live_nodes()
+            if n.entity_type == lc.label and all(_same_value(n.data.get(k), v) for k, v in wanted.items())
+        ]
+        if len(rows) != 1:
+            raise OracleUnmodeled(f"LOOKUP {lc.variable} selects {len(rows)} rows (an error in the engine)")
+        out[lc.variable] = rows[0]
+    return out
+
+
 def eval_predicate(pred: Predicate | None, record: NodeRecord, inputs: dict[str, Any]) -> bool | None:
     """Evaluate a WHERE predicate over one bound node in Kleene 3VL."""
     if pred is None:
@@ -450,6 +554,8 @@ def eval_predicate(pred: Predicate | None, record: NodeRecord, inputs: dict[str,
     if isinstance(pred, ObservationComparison):
         is_null = _resolve_field(pred.field_path, record) is None
         return is_null if pred.kind == "unknown" else (not is_null)
+    if isinstance(pred, TemporalComparison):
+        return _eval_temporal(pred, record, inputs)
     if isinstance(pred, AndPred):
         return _kleene_and(eval_predicate(pred.left, record, inputs), eval_predicate(pred.right, record, inputs))
     if isinstance(pred, OrPred):
@@ -470,6 +576,8 @@ def _predicate_vars(pred: Predicate | None) -> set[str]:
         return set()
     if isinstance(pred, (Comparison, InComparison, IsNullComparison, ObservationComparison)):
         return {pred.field_path.variable}
+    if isinstance(pred, TemporalComparison):
+        return {pred.offset.base.variable}  # the lookup variable is a scalar source, not a binding
     if isinstance(pred, (AndPred, OrPred)):
         return _predicate_vars(pred.left) | _predicate_vars(pred.right)
     if isinstance(pred, NotPred):
@@ -695,6 +803,13 @@ def _eval_scoped(pred: Predicate | None, match: PatternMatch, inputs: dict[str, 
         if record is None:
             return True  # variable not bound here → leaf not applied
         return eval_predicate(pred, record, inputs)
+    if isinstance(pred, TemporalComparison):
+        record = match.node_vars.get(pred.offset.base.variable)
+        if record is None:
+            # Unlike an ordinary leaf, a temporal leaf is never "not applied": the engine refuses an
+            # unbound base, so the oracle must not model the silent drop.
+            raise OracleUnmodeled(f"temporal base variable {pred.offset.base.variable!r} is not bound")
+        return eval_predicate(pred, record, inputs)
     if isinstance(pred, AndPred):
         return _kleene_and(_eval_scoped(pred.left, match, inputs), _eval_scoped(pred.right, match, inputs))
     if isinstance(pred, OrPred):
@@ -719,8 +834,23 @@ class OracleResult:
     rows: tuple[dict[str, Any], ...] = ()
 
 
-def evaluate(ast: GryphonAST, graph: Graph, inputs: dict[str, Any]) -> OracleResult:
+def evaluate(
+    ast: GryphonAST, graph: Graph, inputs: dict[str, Any], *, clock: datetime | None = None
+) -> OracleResult:
     """Evaluate a parsed Gryphon query over the in-memory graph.
+
+    ``clock`` is the scenario's fixed instant for ``now()`` (req-gridkin-scenario-clock); the
+    LOOKUP rows are resolved here, once, from the same graph the engine reads.
+    """
+    token = _TEMPORAL_ENV.set(_TemporalEnv(now=clock, lookups=resolve_lookups(ast, graph, inputs)))
+    try:
+        return _evaluate(ast, graph, inputs)
+    finally:
+        _TEMPORAL_ENV.reset(token)
+
+
+def _evaluate(ast: GryphonAST, graph: Graph, inputs: dict[str, Any]) -> OracleResult:
+    """The evaluation body (see :func:`evaluate`).
 
     Raises `OracleUnmodeled` for any shape not yet modeled (bounded multi-hop,
     display lane, array field paths, aggregates other than COUNT / MIN / MAX, and any

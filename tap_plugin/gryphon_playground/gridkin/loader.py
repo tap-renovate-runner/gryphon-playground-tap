@@ -10,6 +10,7 @@ Per spec-gridkin-v0.md: req-gridkin-scenario-format, req-gridkin-json-schema.
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
@@ -64,6 +65,11 @@ class Scenario:
     expected_error: dict[str, Any] | None = None
     # A declared, tracked oracle/executor disagreement (see the schema field).
     oracle_divergence: str | None = None
+    # Fixed query clock for now() (req-gridkin-scenario-clock): an ISO-8601 instant with an offset.
+    clock: str | None = None
+
+
+_NOW_CALL = re.compile(r"\bnow\s*\(", re.IGNORECASE)
 
 
 def _slugify(text: str) -> str:
@@ -109,6 +115,12 @@ def _parse_file(path: Path, schema: dict[str, Any]) -> list[Scenario]:
 
     parsed: list[Scenario] = []
     for raw in document["scenarios"]:
+        if _NOW_CALL.search(raw["query"]) and not raw.get("clock"):
+            raise GridkinScenarioError(
+                f"{path.name}: scenario {raw['name']!r} reads now() but has no `clock`. A clock-dependent "
+                "scenario would silently depend on the wall clock; add a fixed ISO-8601 `clock` "
+                "(req-gridkin-scenario-clock)."
+            )
         parsed.append(
             Scenario(
                 scenario_id=f"{feature_stem}-{_slugify(raw['name'])}",
@@ -129,6 +141,7 @@ def _parse_file(path: Path, schema: dict[str, Any]) -> list[Scenario]:
                 soft_delete=soft_delete,
                 expected_error=raw.get("expected_error"),
                 oracle_divergence=raw.get("oracle_divergence"),
+                clock=raw.get("clock"),
             )
         )
     return parsed
