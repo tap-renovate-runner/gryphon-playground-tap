@@ -1,0 +1,80 @@
+{
+  "feature": "A RETURN item naming a variable no MATCH clause binds is refused, not silently dropped",
+  "background": {
+    "grift_fixture": "fixtures/sparse_dense.grift.json"
+  },
+  "scenarios": [
+    {
+      "name": "a type-scan RETURN field on an unbound variable is refused",
+      "tags": [
+        "type-scan",
+        "rejection",
+        "unbound-variable"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-shape-11"
+      ],
+      "inspired_by": "opencypher TCK \u2014 clauses/match (an undefined variable in RETURN is a compile-time error: UndefinedVariable)",
+      "layer": "lite",
+      "query": "MATCH (a:grid_fixtures__node) RETURN b.data.kind AS x",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "Unknown variable"
+      }
+    },
+    {
+      "name": "a type-scan RETURN mixing a bound and an unbound item is refused",
+      "tags": [
+        "type-scan",
+        "rejection",
+        "unbound-variable"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-shape-11"
+      ],
+      "inspired_by": "opencypher TCK \u2014 clauses/match (an undefined variable in RETURN is a compile-time error: UndefinedVariable)",
+      "layer": "lite",
+      "query": "MATCH (a:grid_fixtures__node) RETURN a.data.kind AS y, b.data.kind AS x",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "Unknown variable"
+      }
+    },
+    {
+      "name": "a type-scan bare RETURN of an unbound variable is refused",
+      "tags": [
+        "type-scan",
+        "rejection",
+        "unbound-variable"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-shape-11"
+      ],
+      "inspired_by": "opencypher TCK \u2014 clauses/match (an undefined variable in RETURN is a compile-time error: UndefinedVariable)",
+      "layer": "lite",
+      "query": "MATCH (a:grid_fixtures__node) RETURN b",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "Unknown variable"
+      }
+    },
+    {
+      "name": "a chain RETURN field on an unbound variable is refused",
+      "tags": [
+        "chain",
+        "rejection",
+        "unbound-variable"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-shape-11"
+      ],
+      "inspired_by": "opencypher TCK \u2014 clauses/match (an undefined variable in RETURN is a compile-time error: UndefinedVariable)",
+      "layer": "lite",
+      "query": "MATCH (a:grid_fixtures__hub)-[:PG_LINKS__grid_fixtures]->(n:grid_fixtures__node) RETURN zz.data.kind AS x",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "Unknown variable"
+      }
+    }
+  ]
+}

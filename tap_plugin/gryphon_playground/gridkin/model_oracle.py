@@ -872,14 +872,33 @@ def _refuse_unbound_where(ast: GryphonAST) -> None:
     """
     if ast.where_clause is None:
         return
+    bound = _bound_variables(ast)
+    for var in _where_leaf_variables(ast.where_clause.predicate):
+        if var not in bound:
+            raise OracleUnmodeled(f"WHERE names variable {var!r}, which no MATCH clause binds (the engine refuses it)")
+
+
+def _bound_variables(ast: GryphonAST) -> set[str]:
+    """Every named node and edge variable the mandatory MATCH clauses bind."""
     bound: set[str] = set()
     for mc in ast.match_clauses:
         for pattern in mc.patterns:
             bound |= {n.variable for n in pattern.nodes if n.variable}
             bound |= {e.variable for e in pattern.edges if e.variable}
-    for var in _where_leaf_variables(ast.where_clause.predicate):
-        if var not in bound:
-            raise OracleUnmodeled(f"WHERE names variable {var!r}, which no MATCH clause binds (the engine refuses it)")
+    return bound
+
+
+def _refuse_unbound_return(ast: GryphonAST) -> None:
+    """A RETURN item on a variable NO mandatory MATCH clause binds is refused by the engine (Issue# 1079).
+
+    The type-scan projection used to skip such an item; the oracle must not model that drop.
+    """
+    if ast.return_clause.items is None:
+        return
+    bound = _bound_variables(ast)
+    for it in ast.return_clause.items:
+        if isinstance(it, ReturnItem) and it.path.variable not in bound:
+            raise OracleUnmodeled(f"RETURN names variable {it.path.variable!r}, which no MATCH clause binds (the engine refuses it)")
 
 
 def _evaluate(ast: GryphonAST, graph: Graph, inputs: dict[str, Any]) -> OracleResult:
@@ -893,6 +912,7 @@ def _evaluate(ast: GryphonAST, graph: Graph, inputs: dict[str, Any]) -> OracleRe
         return _evaluate_optional_match(ast, graph, inputs)
 
     _refuse_unbound_where(ast)
+    _refuse_unbound_return(ast)
 
     # LIMIT with a positive cap but no ORDER BY: the specific subset returned is
     # the executor's arbitrary-but-deterministic default order — an
