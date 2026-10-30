@@ -277,6 +277,8 @@ def _walk_json_spine(container: Any, steps: tuple[Any, ...]) -> Any:
     naming the bracketed form, and is never reinterpreted as a whole key
     (`req-grid-dimension-query-form`, `req-grid-traversal-lang-envelope-paths-9`).
     One step is legal in either spelling and names one key.
+    This rule applies to labelled and bare scans alike; neither uses nested
+    walking for the spine, while ordinary data JSON keeps `_walk_json`.
 
     So this oracle models exactly one step, and refuses to model more. It does not
     raise the engine's error, because the runner never consults the oracle on a
@@ -610,6 +612,9 @@ class PatternMatch:
 def _node_matches(node_pat: Any, record: NodeRecord, inputs: dict[str, Any]) -> bool:
     if node_pat.label is not None and record.entity_type != node_pat.label:
         return False
+    # Maps arrive through the validated parser: repeated authored keys are
+    # refused BEFORE dict reduction. The oracle never interprets last-wins
+    # constraints; the rejection corpus and rejection generator pin that gate.
     for key, raw in node_pat.inline_props.items():
         want = _resolve_value(raw, inputs)
         # DATA-LANE ONLY — `{k: v}` is exactly `WHERE var.data.k = v` (#196 and

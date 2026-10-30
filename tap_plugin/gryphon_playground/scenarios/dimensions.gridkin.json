@@ -98,6 +98,213 @@
       "expected_error": {
         "type": "SearchExecutionError"
       }
+    },
+    {
+      "name": "bare dotted dimension path is refused",
+      "tags": [
+        "dimensions",
+        "rejection",
+        "resolver-parity"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-envelope-paths-9"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: flat dimension keys across resolver contexts)",
+      "layer": "lite",
+      "query": "MATCH (n) WHERE n.dimensions.tap.playground IS NOT NULL RETURN n",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "[\"tap.playground\"]"
+      }
+    },
+    {
+      "name": "bare bracketed dimension nesting is refused",
+      "tags": [
+        "dimensions",
+        "rejection",
+        "resolver-parity"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-envelope-paths-9"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: flat dimension keys across resolver contexts)",
+      "layer": "lite",
+      "query": "MATCH (n) WHERE n.dimensions[\"tap\"][\"playground\"] = \"gridkin\" RETURN n",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "[\"tap.playground\"]"
+      }
+    },
+    {
+      "name": "bare mixed dimension nesting is refused",
+      "tags": [
+        "dimensions",
+        "rejection",
+        "resolver-parity"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-envelope-paths-9"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: flat dimension keys across resolver contexts)",
+      "layer": "lite",
+      "query": "MATCH (n) WHERE n.dimensions[\"tap\"].playground IN [\"gridkin\"] RETURN n",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "[\"tap.playground\"]"
+      }
+    },
+    {
+      "name": "edge spine dimension nesting uses the shared refusal",
+      "tags": [
+        "dimensions",
+        "rejection",
+        "resolver-parity"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-envelope-paths-9"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: flat dimension keys across resolver contexts)",
+      "layer": "lite",
+      "query": "MATCH (a:grid_fixtures__node)-[e]->(b:grid_fixtures__node) WHERE e.dimensions.tap.playground IS NOT NULL RETURN a, e, b",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "[\"tap.playground\"]"
+      }
+    },
+    {
+      "name": "bare data lane branch keeps the shared dimension refusal",
+      "tags": [
+        "dimensions",
+        "rejection",
+        "resolver-parity"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-envelope-paths-9"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: flat dimension keys across resolver contexts)",
+      "layer": "lite",
+      "query": "MATCH (n) WHERE n.data.name = \"nobody\" AND n.dimensions.tap.playground IS NOT NULL RETURN n",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "[\"tap.playground\"]"
+      }
+    },
+    {
+      "name": "labelled envelope ordering keeps the shared dimension refusal",
+      "tags": [
+        "dimensions",
+        "rejection",
+        "resolver-parity"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-envelope-paths-9"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: flat dimension keys across resolver contexts)",
+      "layer": "lite",
+      "query": "MATCH (n:grid_fixtures__node) ORDER BY n.dimensions.tap.playground",
+      "expected_error": {
+        "type": "SearchExecutionError",
+        "message_contains": "[\"tap.playground\"]"
+      }
+    },
+    {
+      "name": "bare bracketed dotted key presence matches the flat dimension",
+      "tags": [
+        "dimensions",
+        "bare-match",
+        "resolver-parity"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-envelope-paths-9"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: flat dimension keys across resolver contexts)",
+      "layer": "lite",
+      "query": "MATCH (n) WHERE n.dimensions[\"tap.playground\"] IS NOT NULL RETURN n",
+      "expected_envelope": "expected/dimensions__bare_bracket.expected.json",
+      "expected_sql_snapshot": "expected/dimensions__bare_bracket.sql.txt"
+    },
+    {
+      "name": "bare one step dot key presence keeps matching",
+      "tags": [
+        "dimensions",
+        "bare-match",
+        "resolver-parity"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-envelope-paths-9"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: flat dimension keys across resolver contexts)",
+      "layer": "lite",
+      "query": "MATCH (n) WHERE n.dimensions.zone IS NOT NULL RETURN n",
+      "expected_envelope": "expected/dimensions__bare_zone.expected.json",
+      "expected_sql_snapshot": "expected/dimensions__bare_zone.sql.txt"
+    },
+    {
+      "name": "bare absent legal dimension key returns no match",
+      "tags": [
+        "dimensions",
+        "bare-match",
+        "resolver-parity"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-envelope-paths-9"
+      ],
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: flat dimension keys across resolver contexts)",
+      "layer": "lite",
+      "query": "MATCH (n) WHERE n.dimensions[\"tap.absent\"] IS NOT NULL RETURN n",
+      "expected_envelope": "expected/dimensions__bare_no_match.expected.json",
+      "expected_sql_snapshot": "expected/dimensions__bare_no_match.sql.txt"
+    },
+    {
+      "name": "bare bracketed dimension equality matches the flat dimension",
+      "tags": [
+        "dimensions",
+        "bare-match",
+        "resolver-parity"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-envelope-paths-9"
+      ],
+      "note": "Equality binds the value as a Jsonb parameter, so the captured `-- params:` line is not a Python literal; this scenario pins that the registry redaction leaves such a line intact (pending-gridkin-jsonb-redaction).",
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: flat dimension keys across resolver contexts)",
+      "layer": "lite",
+      "query": "MATCH (n) WHERE n.dimensions[\"tap.playground\"] = \"gridkin\" RETURN n",
+      "expected_envelope": "expected/dimensions__bare_eq_bracket.expected.json",
+      "expected_sql_snapshot": "expected/dimensions__bare_eq_bracket.sql.txt"
+    },
+    {
+      "name": "bare bracketed dimension equality on an absent value returns no match",
+      "tags": [
+        "dimensions",
+        "bare-match",
+        "resolver-parity"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-envelope-paths-9"
+      ],
+      "note": "Paired with the matching equality: a value no entity carries is an ordinary empty result, not an error.",
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: flat dimension keys across resolver contexts)",
+      "layer": "lite",
+      "query": "MATCH (n) WHERE n.dimensions[\"tap.playground\"] = \"nope\" RETURN n",
+      "expected_envelope": "expected/dimensions__bare_eq_no_match.expected.json",
+      "expected_sql_snapshot": "expected/dimensions__bare_eq_no_match.sql.txt"
+    },
+    {
+      "name": "bare one step dot key equality keeps matching",
+      "tags": [
+        "dimensions",
+        "bare-match",
+        "resolver-parity"
+      ],
+      "covers": [
+        "req-grid-traversal-lang-envelope-paths-9"
+      ],
+      "note": "The boundary pin for equality: one step after `dimensions` stays legal in the dotted spelling, as it does for presence.",
+      "inspired_by": "opencypher TCK — no applicable feature folder (TAP-native: flat dimension keys across resolver contexts)",
+      "layer": "lite",
+      "query": "MATCH (n) WHERE n.dimensions.zone = \"north\" RETURN n",
+      "expected_envelope": "expected/dimensions__bare_eq_zone.expected.json",
+      "expected_sql_snapshot": "expected/dimensions__bare_eq_zone.sql.txt"
     }
   ]
 }
